@@ -77,19 +77,45 @@ final class ChatRealtimeViewModel: ObservableObject {
     @Published var messages: [ChatMessage] = []
     @Published var typingNames: [String] = []
 
+    // Loading/error cho history
+    @Published var isLoadingHistory = false
+    @Published var historyError: String?
+
     private var cancellables = Set<AnyCancellable>()
     private let conversationId: String
     private let participantsById: [String: Participant]
+    private let service: DefaultAPIService
 
-    init(conversationId: String, participants: [Participant]) {
+    init(conversationId: String,
+         participants: [Participant],
+         service: DefaultAPIService = .init(config: .init())) {
         self.conversationId = conversationId
         self.participantsById = Dictionary(uniqueKeysWithValues: participants.map { ($0.id, $0) })
+        self.service = service
         subscribe()
     }
 
     deinit { NotificationCenter.default.removeObserver(self) }
 
-    // MARK: - In/Out
+    // MARK: - History (REST)
+    @MainActor
+    func loadHistory() async {
+        guard !isLoadingHistory else { return }
+        isLoadingHistory = true
+        defer { isLoadingHistory = false }
+
+        do {
+            let apiMessages = try await service.getMessages(conversationId: conversationId)
+            let mapped = apiMessages.map { ChatMessage(api: $0, participantsById: participantsById) }
+            self.messages = mapped
+            // Đánh dấu đã xem sau khi nạp lịch sử
+            self.markSeen()
+        } catch {
+            self.historyError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
+    }
+
+    // MARK: - In/Out (Realtime)
 
     func send(text: String, me: Participant) {
         // append local (status .sending)
@@ -182,3 +208,4 @@ final class ChatRealtimeViewModel: ObservableObject {
         }
     }
 }
+

@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-
 // MARK: - Chat View
 struct ChatView: View {
     let chat: Chat
@@ -17,19 +16,18 @@ struct ChatView: View {
     @State private var typingUsers: [Participant] = []
     @Namespace private var bottomID
     @StateObject private var rtVM: ChatRealtimeViewModel
-    
-    
+
     init(chat: Chat) {
         self.chat = chat
-         _rtVM = StateObject(wrappedValue: {
-             let vm = ChatRealtimeViewModel(
-                 conversationId: chat.id,
-                 participants: chat.participants
-             )
-             // Seed messages for previews / initial state
-             vm.messages = chat.messages
-             return vm
-         }())
+        _rtVM = StateObject(wrappedValue: {
+            let vm = ChatRealtimeViewModel(
+                conversationId: chat.id,
+                participants: chat.participants
+            )
+            // Seed messages for previews / initial state
+            vm.messages = chat.messages
+            return vm
+        }())
     }
 
     var body: some View {
@@ -43,9 +41,9 @@ struct ChatView: View {
         .onChange(of: rtVM.messages.count) { _ in
             scrollToBottom(animated: true)
         }
-        .onAppear {
-            rtVM.markSeen()
-            scrollToBottom(animated: false)
+        .task {
+            // GỌI API LẤY HISTORY TỪ VIEWMODEL
+            await rtVM.loadHistory()
         }
     }
 
@@ -82,6 +80,25 @@ struct ChatView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 8) {
+                    // Loading/error history (nếu cần hiển thị)
+                    if rtVM.isLoadingHistory && rtVM.messages.isEmpty {
+                        HStack {
+                            ProgressView().scaleEffect(0.9)
+                            Text("Loading messages…")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    if let err = rtVM.historyError {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                            Text(err).font(.footnote)
+                        }
+                        .foregroundStyle(.orange)
+                        .padding(.vertical, 4)
+                    }
+
                     ForEach(groupedByDay(rtVM.messages), id: \.0) { day, items in
                         DateSeparator(date: day)
                         ForEach(items) { msg in
@@ -141,20 +158,6 @@ struct ChatView: View {
     }
 
     // MARK: Helpers
-    private func send() {
-        let content = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !content.isEmpty else { return }
-        draft = ""
-
-        // TODO: call ViewModel -> API `sendMessage`
-        // Tạm thời tạo tin nhắn local (status .sending)
-        if let me = chat.participants.first(where: { $0.isCurrentUser }) {
-            let local = ChatMessage(conversationId: chat.id, sender: me, content: content, createdAt: Date(), status: .sending)
-            // append vào datasource ở ViewModel của bạn
-            print("Local message placeholder:", local)
-        }
-    }
-
     private func scrollToBottom(animated: Bool, proxy: ScrollViewProxy? = nil) {
         let action = { proxy?.scrollTo(bottomID, anchor: .bottom) }
         if animated { withAnimation(.easeOut(duration: 0.25)) { action() } } else { action() }
@@ -424,4 +427,5 @@ struct ChatView_Previews: PreviewProvider {
         }
     }
 }
+
 
