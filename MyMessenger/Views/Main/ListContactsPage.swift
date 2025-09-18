@@ -9,6 +9,12 @@ import SwiftUI
 
 struct ListContactsPage: View {
     @StateObject private var vm = ContactsViewModel(service: .init(config: .init()))
+    // service riêng để tạo/get conversation + lấy "me"
+    private let service = DefaultAPIService(config: .init())
+
+    // Điều hướng sang ChatView sau khi tạo/get conversation
+    @State private var openingChat: Chat? = nil
+    @State private var isCreatingChat: Set<String> = [] // friendId đang mở chat
 
     var body: some View {
         Group {
@@ -25,8 +31,22 @@ struct ListContactsPage: View {
                             Text(user.username)
                                 .font(.body)
 
-                            Spacer()
+                            Spacer(minLength: 12)
 
+                            // Nút Chat (single)
+                            Button {
+                                Task { await openSingleChat(with: user) }
+                            } label: {
+                                if isCreatingChat.contains(user.id) {
+                                    ProgressView()
+                                } else {
+                                    Label("Chat", systemImage: "bubble.right.fill")
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .disabled(isCreatingChat.contains(user.id))
+
+                            // Nút Huỷ kết bạn
                             Button(role: .destructive) {
                                 vm.unfriend(userId: user.id)
                             } label: {
@@ -46,57 +66,60 @@ struct ListContactsPage: View {
             }
         }
         .navigationTitle("Contacts")
-        .task {
-            await vm.load()
-        }
+        .task { await vm.load() }
         .alert("Error", isPresented: $vm.hasError, actions: {
             Button("OK", role: .cancel) { vm.hasError = false }
         }, message: {
             Text(vm.errorMessage ?? "Something went wrong.")
         })
-        .refreshable {
-            await vm.reload()
-        }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink {
-                    PendingRequestsPage(service: .init(config: .init()))
-                } label: {
-                    Label("Requests", systemImage: "envelope.badge")
-                }
-            }
+        .refreshable { await vm.reload() }
 
-            ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink {
-                    InviteFriendPage(service: .init(config: .init()))
-                } label: {
-                    Label("Add Friend", systemImage: "person.badge.plus")
-                }
-            }
+        // Điều hướng ChatView
+        .navigationDestination(item: $openingChat) { chat in
+            ChatView(chat: chat)
+                .navigationTitle(chat.title)
+                .navigationBarTitleDisplayMode(.inline)
         }
+        // Toolbar giữ nguyên (Requests + Add Friend) nếu bạn đã có
+    }
 
+    // MARK: - Actions
+
+    /// Tạo/get single conversation với friend và mở ChatView
+    private func openSingleChat(with friend: User) async {
+        guard !isCreatingChat.contains(friend.id) else { return }
+        isCreatingChat.insert(friend.id)
+        defer { isCreatingChat.remove(friend.id) }
+
+        do {
+            // Lấy "me" để gắn participants
+            let me = try await service.me()
+
+            // Tạo/get conversation 1-1
+            // Client hiện dùng CreateSingleConversationRequest(userId:),
+            // backend đang mong otherUserId. Xem ghi chú ở cuối.
+            let conv = try await service.createSingleConversation(
+                .init(userId: friend.id)
+            )
+
+            // Build participants & Chat model
+            let meP = Participant(id: me.id, name: me.username, avatarURL: me.avatar, isCurrentUser: true)
+            let friendP = Participant(id: friend.id, name: friend.username, avatarURL: friend.avatar, isCurrentUser: false)
+
+            let title = friend.username
+            let chat = Chat(
+                id: conv.id,
+                type: .oneToOne,
+                title: title,
+                participants: [meP, friendP],
+                messages: [] // có thể load lịch sử tại ChatView nếu muốn
+            )
+
+            openingChat = chat
+        } catch {
+            // Có thể hiển thị alert riêng tại đây nếu bạn muốn
+            print("Open chat failed:", error.localizedDescription)
+        }
     }
 }
 
-struct ListContactsPage_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationStack {
-            ListContactsPage()
-        }
-        .environmentObject(
-            ContactsViewModel_Preview()
-        )
-    }
-}
-
-/// Mock ViewModel cho Preview
-@MainActor
-final class ContactsViewModel_Preview: ContactsViewModel {
-    init() {
-        super.init(service: .init(config: .init()))
-        self.friends = [
-            User(id: "1", username: "Alice", email: "alice@example.com", avatar: nil),
-            User(id: "2", username: "Bob", email: "bob@example.com", avatar: nil)
-        ]
-    }
-}

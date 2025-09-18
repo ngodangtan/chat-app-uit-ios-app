@@ -24,7 +24,6 @@ struct MainPage: View {
                 Label("Contacts", systemImage: "person.2")
             }
 
-
             NavigationView {
                 ProfileView()
             }

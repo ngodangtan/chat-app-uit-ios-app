@@ -21,12 +21,18 @@ struct Participant: Identifiable, Hashable {
     }
 }
 
-struct Chat: Identifiable {
+struct Chat: Identifiable, Equatable, Hashable {
     let id: String                 // match Conversation.id
     let type: ChatType
     let title: String
     let participants: [Participant]
     var messages: [ChatMessage]
+}
+
+// So sánh & hash chỉ theo id để tránh tốn kém khi mảng lớn
+extension Chat {
+    static func == (lhs: Chat, rhs: Chat) -> Bool { lhs.id == rhs.id }
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
 
 // UI view-model for API.Message
