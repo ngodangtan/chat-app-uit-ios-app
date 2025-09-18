@@ -33,6 +33,8 @@ class AuthViewModel: ObservableObject {
     func checkIsLoginorNot() {
         if KeychainHelper.shared.read(service: "com.myapp.auth", account: "accessToken") != nil {
             isLoggedIn = true
+            // connect realtime
+            RealtimeClient.shared.connect()
         } else {
             isLoggedIn = false
         }

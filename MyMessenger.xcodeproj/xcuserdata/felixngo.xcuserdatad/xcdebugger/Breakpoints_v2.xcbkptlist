@@ -7,17 +7,63 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "85DE2A6C-EA7A-4750-8A43-076CE08FBFCF"
+            uuid = "5B5D211A-EF84-453F-937B-68CE0E19B1A1"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "MyMessenger/Network/APIService.swift"
+            filePath = "MyMessenger/Network/RealtimeClient.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "222"
-            endingLineNumber = "222"
-            landmarkName = "request(_:method:query:body:authorized:expectsNoContent:)"
+            startingLineNumber = "79"
+            endingLineNumber = "79"
+            landmarkName = "sendMessage(conversationId:content:)"
             landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "3512BAB1-61E4-4933-8443-7CDF0A184A0B"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "MyMessenger/Network/RealtimeClient.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "36"
+            endingLineNumber = "36"
+            landmarkName = "connect()"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "3512BAB1-61E4-4933-8443-7CDF0A184A0B - 92a8962ad7dd19c2"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "MyMessenger.RealtimeClient.connect() -&gt; ()"
+                  moduleName = "MyMessenger.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/felixngo/Desktop/IOS%20App/MyMessenger/MyMessenger/Network/RealtimeClient.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "36"
+                  endingLineNumber = "36">
+               </Location>
+               <Location
+                  uuid = "3512BAB1-61E4-4933-8443-7CDF0A184A0B - 92a8962ad7dd19c2"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "MyMessenger.RealtimeClient.connect() -&gt; ()"
+                  moduleName = "MyMessenger.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/felixngo/Desktop/IOS%20App/MyMessenger/MyMessenger/Network/RealtimeClient.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "36"
+                  endingLineNumber = "36">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>
