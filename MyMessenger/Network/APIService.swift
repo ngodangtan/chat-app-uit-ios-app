@@ -128,7 +128,7 @@ public protocol APIService {
 
     // Friends
     func sendFriendRequest(_ req: FriendRequestCreate) async throws -> FriendRequest
-    func acceptFriendRequest(_ req: FriendRequestAccept) async throws -> FriendRequest
+    func acceptFriendRequest(_ req: FriendRequestAccept) async throws -> VoidResponse
     func listFriends() async throws -> [User]
     func pendingFriendRequests() async throws -> [FriendRequest]
 
@@ -305,7 +305,7 @@ public final class DefaultAPIService: APIService {
         try await request("/friends/request", method: "POST", body: req)
     }
 
-    public func acceptFriendRequest(_ req: FriendRequestAccept) async throws -> FriendRequest {
+    public func acceptFriendRequest(_ req: FriendRequestAccept) async throws -> VoidResponse {
         try await request("/friends/accept", method: "POST", body: req)
     }
 
