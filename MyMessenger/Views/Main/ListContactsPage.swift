@@ -73,6 +73,24 @@ struct ListContactsPage: View {
             Text(vm.errorMessage ?? "Something went wrong.")
         })
         .refreshable { await vm.reload() }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    PendingRequestsPage(service: .init(config: .init()))
+                } label: {
+                    Label("Requests", systemImage: "envelope.badge")
+                }
+            }
+
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    InviteFriendPage(service: .init(config: .init()))
+                } label: {
+                    Label("Add Friend", systemImage: "person.badge.plus")
+                }
+            }
+
+        }
 
         // Điều hướng ChatView
         .navigationDestination(item: $openingChat) { chat in

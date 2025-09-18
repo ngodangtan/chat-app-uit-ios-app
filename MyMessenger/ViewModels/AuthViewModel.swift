@@ -37,4 +37,13 @@ class AuthViewModel: ObservableObject {
             isLoggedIn = false
         }
     }
+    
+    func getProfile() async throws -> User? {
+        do {
+            let profile = try await api.me()
+            return profile
+        } catch {
+            return nil
+        }
+    }
 }

@@ -2,6 +2,8 @@ import SwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject var auth: AuthViewModel
+    @State private var userName: String = ""
+    @State private var email: String = ""
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "person.crop.circle.fill")
@@ -10,11 +12,11 @@ struct ProfileView: View {
                 .foregroundColor(.accentColor)
                 .padding(.top, 32)
 
-            Text("User Name")
+            Text(userName)
                 .font(.title2)
                 .bold()
 
-            Text("user@example.com")
+            Text(email)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
 
@@ -25,6 +27,13 @@ struct ProfileView: View {
         }
         .padding()
         .navigationTitle("Profile")
+        .task {
+            Task {
+                let profile = try? await auth.getProfile()
+                userName = profile?.username ?? ""
+                email = profile?.email ?? ""
+            }
+        }
     }
 }
 
