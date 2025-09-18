@@ -38,27 +38,23 @@ public final class RealtimeClient {
             return
         }
 
-        // Config Socket.IO
-        let config: SocketIOClientConfiguration = [
-            .log(false),
-            .compress,
-            .reconnects(true),
-            .reconnectAttempts(-1),
-            .reconnectWait(2),
-            .forceWebsockets(true) // ổn định trên iOS
-        ]
-
+        // Tạo manager, KHÔNG đính token vào query
         let manager = SocketManager(
             socketURL: URL(string: "http://localhost:3000")!,
             config: [
                 .log(true),
                 .compress,
-                .connectParams(["auth": ["token": token]])
+                .forceWebsockets(true),
+                .reconnects(true),
+                .reconnectAttempts(-1),
+                .reconnectWait(2)
             ]
         )
 
         let socket = manager.defaultSocket
-        socket.connect()
+
+        // >> Quan trọng: gửi JWT qua payload của connect (để server đọc ở handshake.auth)
+        socket.connect(withPayload: ["token": token])
 
         // Listeners
         bindCoreEvents(socket)
