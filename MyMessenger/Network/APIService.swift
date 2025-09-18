@@ -125,6 +125,7 @@ public protocol APIService {
     func createSingleConversation(_ req: CreateSingleConversationRequest) async throws -> Conversation
     func createGroupConversation(_ req: CreateGroupConversationRequest) async throws -> Conversation
     func myConversations() async throws -> [Conversation]
+    func deleteConversation(conversationId: String) async throws -> VoidResponse
 
     // Friends
     func sendFriendRequest(_ req: FriendRequestCreate) async throws -> FriendRequest
@@ -298,6 +299,12 @@ public final class DefaultAPIService: APIService {
 
     public func myConversations() async throws -> [Conversation] {
         try await request("/conversations/my")
+    }
+    
+    public func deleteConversation(conversationId: String) async throws -> VoidResponse {
+        try await request("/conversations/\(conversationId)",
+                          method: "DELETE",
+                          expectsNoContent: true)
     }
 
     // Friends

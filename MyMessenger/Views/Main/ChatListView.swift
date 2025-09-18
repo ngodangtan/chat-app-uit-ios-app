@@ -7,7 +7,8 @@ import SwiftUI
 
 struct ChatListView: View {
     @StateObject private var vm = ChatListViewModel()
-
+    @State private var rowToDelete: ChatListViewModel.Row? = nil
+    
     var body: some View {
         Group {
             if vm.isLoading && vm.rows.isEmpty {
@@ -49,10 +50,21 @@ struct ChatListView: View {
                                             .lineLimit(1)
                                     }
                                 }
-
+                                
                                 Spacer()
+                                if vm.deleting.contains(row.id) {
+                                    ProgressView().scaleEffect(0.8)
+                                }
                             }
                             .padding(.vertical, 6)
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                rowToDelete = row
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                            .disabled(vm.deleting.contains(row.id))
                         }
                     }
                 }
@@ -67,6 +79,24 @@ struct ChatListView: View {
         } message: {
             Text(vm.errorMessage ?? "Something went wrong.")
         }
+        .alert("Delete this conversation?",
+               isPresented: Binding(
+                get: { rowToDelete != nil },
+                set: { if !$0 { rowToDelete = nil } }
+               ),
+               actions: {
+            Button("Delete", role: .destructive) {
+                if let row = rowToDelete {
+                    Task { await vm.deleteConversation(row) }
+                }
+                rowToDelete = nil
+            }
+            Button("Cancel", role: .cancel) { rowToDelete = nil }
+        },
+               message: {
+            Text("This will remove it from your list. For group chats, you will leave the group.")
+        }
+        )
     }
 }
 

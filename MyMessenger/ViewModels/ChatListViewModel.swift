@@ -26,6 +26,7 @@ final class ChatListViewModel: ObservableObject {
 
     private let service: DefaultAPIService
     private var currentUserId: String?
+    @Published var deleting: Set<String> = []
 
     init(service: DefaultAPIService = .init(config: .init())) {
         self.service = service
@@ -91,6 +92,25 @@ final class ChatListViewModel: ObservableObject {
             hasError = true
             errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
+    }
+    
+    
+    func deleteConversation(_ row: Row) async {
+        guard !deleting.contains(row.id) else { return }
+        deleting.insert(row.id)
+
+        let backup = rows
+        rows.removeAll { $0.id == row.id }
+
+        do {
+            _ = try await service.deleteConversation(conversationId: row.id)
+        } catch {
+            rows = backup
+            hasError = true
+            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
+
+        deleting.remove(row.id)
     }
 
     func reload() async { await load() }
