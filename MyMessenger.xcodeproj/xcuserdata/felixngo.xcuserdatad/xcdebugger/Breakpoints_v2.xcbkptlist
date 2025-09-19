@@ -7,16 +7,16 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "5B5D211A-EF84-453F-937B-68CE0E19B1A1"
+            uuid = "045492C5-3650-46F1-A737-7F3166E8177A"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "MyMessenger/Network/RealtimeClient.swift"
+            filePath = "MyMessenger/ViewModels/ChatRealtimeViewModel.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "75"
-            endingLineNumber = "75"
-            landmarkName = "sendMessage(conversationId:content:)"
+            startingLineNumber = "142"
+            endingLineNumber = "142"
+            landmarkName = "subscribe()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

@@ -138,15 +138,21 @@ final class ChatRealtimeViewModel: ObservableObject {
 
     private func subscribe() {
         NotificationCenter.default.publisher(for: .rtNewMessage)
-            .sink { [weak self] noti in self?.handleNewMessage(noti) }
+            .sink { [weak self] noti in
+                self?.handleNewMessage(noti)
+            }
             .store(in: &cancellables)
 
         NotificationCenter.default.publisher(for: .rtTyping)
-            .sink { [weak self] noti in self?.handleTyping(noti) }
+            .sink { [weak self] noti in
+                self?.handleTyping(noti)
+            }
             .store(in: &cancellables)
 
         NotificationCenter.default.publisher(for: .rtSeen)
-            .sink { [weak self] noti in self?.handleSeen(noti) }
+            .sink { [weak self] noti in
+                self?.handleSeen(noti)
+            }
             .store(in: &cancellables)
     }
 
