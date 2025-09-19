@@ -39,11 +39,11 @@ extension Chat {
 enum MessageStatus { case sending, sent, delivered, read }
 
 struct ChatMessage: Identifiable, Hashable {
-    let id: String                 // API.Message.id
+    var id: String                 // API.Message.id (mutable to be reconciled with server id)
     let conversationId: String
     let sender: Participant        // mapped from API senderId
     let content: String            // API.Message.content
-    let createdAt: Date
+    var createdAt: Date            // make mutable so we can replace with server timestamp
     var status: MessageStatus = .sent
 
     init(id: String = UUID().uuidString,
@@ -173,6 +173,21 @@ final class ChatRealtimeViewModel: ObservableObject {
         let msg = ChatMessage(id: id, conversationId: convId, sender: sender, content: content, createdAt: createdAt, status: .sent)
 
         DispatchQueue.main.async {
+            // If the incoming message is from the current user, attempt to reconcile with a local
+            // sending message (avoid duplicating). Match by sender id + status == .sending + same content.
+            if sender.isCurrentUser {
+                if let idx = self.messages.firstIndex(where: {
+                    $0.sender.id == sender.id && $0.status == .sending && $0.content == content
+                }) {
+                    // update existing local message with server id / timestamp / status
+                    self.messages[idx].id = id
+                    self.messages[idx].createdAt = createdAt
+                    self.messages[idx].status = .sent
+                    return
+                }
+            }
+
+            // Otherwise append as normal
             self.messages.append(msg)
         }
     }
