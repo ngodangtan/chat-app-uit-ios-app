@@ -118,12 +118,14 @@ final class ChatRealtimeViewModel: ObservableObject {
     // MARK: - In/Out (Realtime)
 
     func send(text: String, me: Participant) {
-        // append local (status .sending)
-        let local = ChatMessage(conversationId: conversationId, sender: me, content: text, createdAt: Date(), status: .sending)
+        // create local message with clientId = id (so we can match server echo)
+        var local = ChatMessage(conversationId: conversationId, sender: me, content: text, createdAt: Date(), status: .sending)
+        // ensure id is stable client id
+        let clientId = local.id
         messages.append(local)
 
-        // emit lên server
-        RealtimeClient.shared.sendMessage(conversationId: conversationId, content: text)
+        // emit lên server kèm clientId
+        RealtimeClient.shared.sendMessage(conversationId: conversationId, content: text, clientId: clientId)
     }
 
     func setTyping(_ on: Bool) {
@@ -168,18 +170,16 @@ final class ChatRealtimeViewModel: ObservableObject {
         let content = dict["content"] as? String ?? ""
         let createdAtISO = dict["createdAt"] as? String
         let createdAt = ISO8601DateFormatter().date(from: createdAtISO ?? "") ?? Date()
+        let clientIdFromServer = dict["clientId"] as? String
 
         let sender = participantsById[senderId] ?? Participant(id: senderId, name: "Unknown")
         let msg = ChatMessage(id: id, conversationId: convId, sender: sender, content: content, createdAt: createdAt, status: .sent)
 
         DispatchQueue.main.async {
-            // If the incoming message is from the current user, attempt to reconcile with a local
-            // sending message (avoid duplicating). Match by sender id + status == .sending + same content.
-            if sender.isCurrentUser {
-                if let idx = self.messages.firstIndex(where: {
-                    $0.sender.id == sender.id && $0.status == .sending && $0.content == content
-                }) {
-                    // update existing local message with server id / timestamp / status
+            // 1) If server returned clientId, prefer matching by clientId (reliable)
+            if let clientId = clientIdFromServer {
+                if let idx = self.messages.firstIndex(where: { $0.id == clientId }) {
+                    // update local (replace id -> server id, timestamp, status)
                     self.messages[idx].id = id
                     self.messages[idx].createdAt = createdAt
                     self.messages[idx].status = .sent
@@ -187,7 +187,19 @@ final class ChatRealtimeViewModel: ObservableObject {
                 }
             }
 
-            // Otherwise append as normal
+            // 2) Fallback: if sender is current user, try to match a .sending local message by sender+content
+            if sender.isCurrentUser {
+                if let idx = self.messages.firstIndex(where: {
+                    $0.sender.id == sender.id && $0.status == .sending && $0.content == content
+                }) {
+                    self.messages[idx].id = id
+                    self.messages[idx].createdAt = createdAt
+                    self.messages[idx].status = .sent
+                    return
+                }
+            }
+
+            // 3) Otherwise append as normal
             self.messages.append(msg)
         }
     }

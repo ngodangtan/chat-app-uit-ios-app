@@ -38,9 +38,8 @@ public final class RealtimeClient {
             return
         }
 
-        // Tạo manager, KHÔNG đính token vào query
         let manager = SocketManager(
-            socketURL: URL(string: "http://localhost:3000")!,
+            socketURL: socketURL,
             config: [
                 .log(true),
                 .compress,
@@ -53,12 +52,12 @@ public final class RealtimeClient {
 
         let socket = manager.defaultSocket
 
-        // >> Quan trọng: gửi JWT qua payload của connect (để server đọc ở handshake.auth)
-        socket.connect(withPayload: ["token": token])
-
-        // Listeners
+        // Register handlers BEFORE connecting to avoid missing early events
         bindCoreEvents(socket)
         bindBusinessEvents(socket)
+
+        // >> Quan trọng: gửi JWT qua payload của connect (để server đọc ở handshake.auth)
+        socket.connect(withPayload: ["token": token])
 
         self.manager = manager
         self.socket = socket
@@ -70,9 +69,11 @@ public final class RealtimeClient {
         manager = nil
     }
 
-    /// Gửi tin nhắn
-    public func sendMessage(conversationId: String, content: String) {
-        socket?.emit("chat:send", ["conversationId": conversationId, "content": content])
+    /// Gửi tin nhắn (bổ sung clientId để server echo lại và giúp reconcile)
+    public func sendMessage(conversationId: String, content: String, clientId: String? = nil) {
+        var payload: [String: Any] = ["conversationId": conversationId, "content": content]
+        if let cid = clientId { payload["clientId"] = cid }
+        socket?.emit("chat:send", payload)
     }
 
     /// Đánh dấu đang gõ
