@@ -8,7 +8,8 @@ import SwiftUI
 struct ChatListView: View {
     @StateObject private var vm = ChatListViewModel()
     @State private var rowToDelete: ChatListViewModel.Row? = nil
-    
+    @State private var showCreateGroup = false   // <-- thêm
+
     var body: some View {
         Group {
             if vm.isLoading && vm.rows.isEmpty {
@@ -50,7 +51,7 @@ struct ChatListView: View {
                                             .lineLimit(1)
                                     }
                                 }
-                                
+
                                 Spacer()
                                 if vm.deleting.contains(row.id) {
                                     ProgressView().scaleEffect(0.8)
@@ -73,6 +74,25 @@ struct ChatListView: View {
             }
         }
         .navigationTitle("Chats")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Button {
+                        showCreateGroup = true
+                    } label: {
+                        Label("Chat nhóm", systemImage: "person.3.fill")
+                    }
+                } label: {
+                    Image(systemName: "plus.circle")
+                }
+                .accessibilityLabel("Tạo mới")
+            }
+        }
+        .sheet(isPresented: $showCreateGroup) {
+            NavigationStack {
+                GroupCreationView()
+            }
+        }
         .task { await vm.load() }
         .alert("Error", isPresented: $vm.hasError) {
             Button("OK", role: .cancel) { vm.hasError = false }
@@ -100,7 +120,4 @@ struct ChatListView: View {
     }
 }
 
-#Preview {
-    NavigationStack { ChatListView() }
-}
 
