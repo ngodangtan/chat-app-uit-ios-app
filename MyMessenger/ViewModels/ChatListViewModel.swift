@@ -31,7 +31,40 @@ final class ChatListViewModel: ObservableObject {
     init(service: DefaultAPIService = .init(config: .init())) {
         self.service = service
     }
+    
+    func deleteConversation(_ row: Row) async {
+        guard !deleting.contains(row.id) else { return }
+        deleting.insert(row.id)
 
+        let backup = rows
+        rows.removeAll { $0.id == row.id }
+
+        do {
+            _ = try await service.deleteConversation(conversationId: row.id)
+        } catch {
+            rows = backup
+            hasError = true
+            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
+
+        deleting.remove(row.id)
+    }
+
+    func reload() async { await load() }
+
+    /// Tạo model `Chat` để mở `ChatView`
+    func makeChat(for row: Row) -> Chat {
+        Chat(
+            id: row.id,
+            type: row.type,
+            title: row.title,
+            participants: row.participants,
+            messages: [] // sẽ nhận realtime +/hoặc load lịch sử sau
+        )
+    }
+}
+
+extension ChatListViewModel {
     func load() async {
         guard !isLoading else { return }
         isLoading = true
@@ -92,37 +125,5 @@ final class ChatListViewModel: ObservableObject {
             hasError = true
             errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
-    }
-    
-    
-    func deleteConversation(_ row: Row) async {
-        guard !deleting.contains(row.id) else { return }
-        deleting.insert(row.id)
-
-        let backup = rows
-        rows.removeAll { $0.id == row.id }
-
-        do {
-            _ = try await service.deleteConversation(conversationId: row.id)
-        } catch {
-            rows = backup
-            hasError = true
-            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-        }
-
-        deleting.remove(row.id)
-    }
-
-    func reload() async { await load() }
-
-    /// Tạo model `Chat` để mở `ChatView`
-    func makeChat(for row: Row) -> Chat {
-        Chat(
-            id: row.id,
-            type: row.type,
-            title: row.title,
-            participants: row.participants,
-            messages: [] // sẽ nhận realtime +/hoặc load lịch sử sau
-        )
     }
 }

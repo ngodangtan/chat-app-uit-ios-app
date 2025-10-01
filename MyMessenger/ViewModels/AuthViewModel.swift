@@ -6,10 +6,12 @@
 //
 import SwiftUI
 
-class AuthViewModel: ObservableObject {
+final class AuthViewModel: ObservableObject {
     @Published var isLoggedIn = false
     private let api = DefaultAPIService(config: .init())
-    
+}
+
+extension AuthViewModel {
     @MainActor
     func login(email: String, password: String) async {
         do {

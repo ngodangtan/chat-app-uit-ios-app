@@ -63,50 +63,6 @@ public enum APIError: Error, LocalizedError {
     }
 }
 
-// MARK: - Models (match your schemas)
-public struct FriendRequestCreate: Encodable, Hashable {
-    public let email: String
-}
-
-public struct User: Codable, Identifiable, Hashable {
-    public let id: String
-    public let username: String
-    public let email: String
-    public let avatar: URL?
-}
-
-public enum FriendRequestStatus: String, Codable {
-    case pending, accepted, rejected
-}
-
-public struct FriendRequest: Codable, Identifiable, Hashable {
-    public let id: String
-    public let from: User
-    public let to: User
-    public let status: FriendRequestStatus
-}
-
-public enum ConversationType: String, Codable {
-    case single, group
-}
-
-public struct Conversation: Codable, Identifiable, Hashable {
-    public let id: String
-    public let type: ConversationType
-    public let name: String?
-    public let members: [User]
-    public let lastMessageAt: Date?
-}
-
-public struct Message: Codable, Identifiable, Hashable {
-    enum Status { case sending, sent, delivered, read }
-    public let id: String
-    public let conversationId: String
-    public let senderId: String
-    public let content: String
-    public let createdAt: Date
-}
-
 // MARK: - API Service Protocol
 
 public protocol APIService {
