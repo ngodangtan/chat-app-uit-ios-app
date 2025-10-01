@@ -102,39 +102,11 @@ public struct VoidResponse: Decodable {} // convenience for endpoints returning 
 public final class DefaultAPIService: APIService {
     private let config: APIConfig
     private let session: URLSession
+    private logHelper = LogHelper()
 
     public init(config: APIConfig, session: URLSession = .shared) {
         self.config = config
         self.session = session
-    }
-    
-    private func logRequest(_ req: URLRequest, body: Data?) {
-        var log = "\n========= 📤 REQUEST =========\n"
-        log += "\(req.httpMethod ?? "GET") \(req.url?.absoluteString ?? "")\n"
-        if let headers = req.allHTTPHeaderFields, !headers.isEmpty {
-            log += "Headers:\n"
-            headers.forEach { k, v in log += "  \(k): \(v)\n" }
-        }
-        if let body = body, !body.isEmpty {
-            let bodyStr = String(data: body, encoding: .utf8) ?? "<non-utf8 body>"
-            log += "Body:\n\(bodyStr)\n"
-        }
-        log += "==============================\n"
-        print(log)
-    }
-
-    private func logResponse(url: URL?, status: Int, data: Data?) {
-        var log = "\n========= 📥 RESPONSE ========\n"
-        log += "URL: \(url?.absoluteString ?? "")\n"
-        log += "Status: \(status)\n"
-        if let data = data, !data.isEmpty {
-            let raw = String(data: data, encoding: .utf8) ?? "<non-utf8 data>"
-            log += "Raw JSON:\n\(raw)\n"
-        } else {
-            log += "Raw JSON: <empty>\n"
-        }
-        log += "==============================\n"
-        print(log)
     }
 
     // Generic request performer
@@ -175,8 +147,8 @@ public final class DefaultAPIService: APIService {
         }
         
         // LOG: request
-        logRequest(req, body: encodedBody)
-        
+        logHelper.logRequest(req, body: encodedBody)
+                
         let (data, response): (Data?, URLResponse)
         do {
             (data, response) = try await session.data(for: req)
@@ -186,7 +158,7 @@ public final class DefaultAPIService: APIService {
 
         guard let http = response as? HTTPURLResponse else { throw APIError.noData }
         // LOG: response (raw)
-        logResponse(url: url, status: http.statusCode, data: data)
+        logHelper.logResponse(url: url, status: http.statusCode, data: data)
         
         // 204 No Content or explicitly expected no content
         if (http.statusCode == 204 || expectsNoContent), (T.self == VoidResponse.self) {
